@@ -7,7 +7,7 @@ uses
   System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Buttons, Vcl.StdCtrls,
   TypeEdit, IniFiles, System.JSON, Vcl.ComCtrls, rest.types,
-  System.Net.HttpClient, IdHTTP;
+  System.Net.HttpClient, IdHTTP, System.NetEncoding;
 
 type
   TFrmPrincipal = class(TForm)
@@ -98,14 +98,15 @@ var
   xRequestBody: TStringList;
   objHTTP: TIdHTTP;
   LResponse: IResponse;
-  LJSONValue, jsValue, JSonValue: TJSONValue;
+  LJSONValue, jsValue, JSonValue, valueImage: TJSONValue;
   jsonRaiz, jsonObject: TJSONObject;
-  LJSONArray, jsArray: TJSONArray;
+  LJSONArray, jsArray, arrayImage: TJSONArray;
   i: integer;
   jsonRegistros, jsonCategoria, response: string;
   retornoApiAlsti, descricao, preco, sku, visivel, cervejaria, tipo, estilo,
     origem, teor, ibu, categoria, codCat, infoCat, retorno, id, idProdutoMytapp,
-    referencia: string;
+    referencia, retornoImagens, imagemCervejaria, imagemCerveja, url,
+    codigoDesabilitar: string;
 begin
 
   { ==================================================
@@ -149,6 +150,33 @@ begin
           teor := LJSONValue.GetValue<string>('teorAlcoolicoMytapp');
           ibu := LJSONValue.GetValue<string>('ibuMytapp');
 
+          // Enviar imagens caso existam
+          if tipo = 'beer' then
+          begin
+            url := 'data:image/jpeg;base64,';
+
+            LResponse := TRequest.New.BaseURL(urlBaseAlsti + ':' + portAlsti +
+              '/v1/ImagemMytapp').AddParam('codigo', sku)
+              .Accept('application/json').Get;
+            retornoImagens := LResponse.Content;
+
+            if retornoImagens <> 'Imagem não encontrada ou não existe' then
+            begin
+              arrayImage := TJSONObject.ParseJSONValue(retornoImagens)
+                as TJSONArray;
+              try
+                for valueImage in arrayImage do
+                begin
+                  imagemCervejaria := valueImage.GetValue<string>
+                    ('imagemCervajaria');
+                  imagemCerveja := valueImage.GetValue<string>('imagemCerveja');
+                end;
+              finally
+                arrayImage.Free;
+              end;
+            end;
+          end;
+
           // Valida a existência da categoria utilizada pelo produto na mytapp
           LResponse := TRequest.New.BaseURL
             (urlBaseMytapp + '/api/v1/getProductByCategoryId')
@@ -185,8 +213,7 @@ begin
           begin
             Clear;
             ContentType := 'application/x-www-form-urlencoded';
-            CustomHeaders.AddValue('token',
-              '23921923-fafa-4496-9961-e491631a7ea9');
+            CustomHeaders.AddValue('token', tokenMytapp);
           end;
 
           xRequestBody := TStringList.Create;
@@ -209,6 +236,10 @@ begin
               xRequestBody.Add('alcohol=' + teor);
             if ibu <> '' then
               xRequestBody.Add('ibu=' + ibu);
+            if imagemCerveja <> '' then
+              xRequestBody.Add('image_beer=' + url + imagemCerveja);
+            if imagemCervejaria <> '' then
+              xRequestBody.Add('image_brewery=' + url + imagemCerveja);
 
             // Grava registo no mytapp
             response :=
@@ -244,44 +275,13 @@ begin
       finally
         LJSONArray.Free;
       end;
-
-      // Valida se os mesmos registros existem nas duas bases
-      LResponse := TRequest.New.BaseURL
-        (urlBaseMytapp + '/v1/getAllProductAndBeers')
-        .AddHeader('token', tokenMytapp).Accept('application/json').Get;
-      retorno := LResponse.Content;
-
-      jsonRaiz := TJSONObject.ParseJSONValue(retorno) as TJSONObject;
-      if (jsonRaiz <> nil) then
-      begin
-        jsArray := jsonRaiz.GetValue<TJSONArray>('data') as TJSONArray;
-        for i := 0 to jsArray.Count - 1 do
-        begin
-          jsonObject := jsArray.Items[i] as TJSONObject;
-          id := jsonObject.GetValue<string>('person_id');
-
-          // Valida a existência do registro da mytapp na base do cliente
-          LResponse := TRequest.New.BaseURL(urlBaseAlsti + ':' + portAlsti +
-            '/v1/produtos/' + id).Get;
-
-          // Desabilita o produto na mytapp caso não seja encontrado na base do cliente
-          if LResponse.Content = 'Produto não encontrado ou não existe' then
-          begin
-            // Json a ser enviado
-            jsonRegistros := '{"product_sales_id" =' + id +
-              ', "visible" = False}';
-
-            // Request para desabilitar
-            LResponse := TRequest.New.BaseURL
-              (urlBaseMytapp + '/api/v1/deleteProduct')
-              .AddHeader('token', tokenMytapp).ContentType('application/json')
-              .AddBody(jsonRegistros).Post;
-          end;
-        end;
-      end;
       if Timer.Enabled = False then
         ShowMessage('Produtos exportados com sucesso!');
     end
+    else
+    begin
+      ShowMessage('Nenhum produto encontrado para transmitir!');
+    end;
   except
     on E: Exception do
       if Timer.Enabled = False then
@@ -342,12 +342,20 @@ begin
         numeroCartao := jsonObject.GetValue('visits.device_id').Value;
 
         // Tratar data para o formato adequado (yyyy/mm/aa)
-        n := Length(nascimento);
-        if n > 10 then
-          delete(nascimento, 11, 19);
-        if nascimento = '' then
-          nascimento := '01/01/2022';
-        convData := FormatDateTime('yyyy/mm/dd', StrToDate(nascimento));
+        try
+          n := Length(nascimento);
+          if n > 10 then
+            delete(nascimento, 11, 19);
+          if nascimento = '' then
+            nascimento := '01/01/2022';
+          convData := FormatDateTime('yyyy/mm/dd', StrToDate(nascimento));
+        except
+          on E: Exception do
+            if Timer.Enabled = False then
+            begin
+              ShowMessage('Data inválida cadastrada: ' + E.Message);
+            end;
+        end;
 
         // Validação para pegar somente os não sincronizados
         if (sincronizado = '') or (sincronizado.ToInteger <> 1) then
@@ -427,7 +435,7 @@ var
     nameProduct, sync, salesId, jsonProdutos, jsonCervejas, retornoNome,
     jsonSyncProducts, saleDateFormated, consumptionStartFormated,
     consumptionEndFormated, idProduto, d, m, a, h, quantity, vlTotalArmazenado,
-    jsonCC, situacao, idContaCliente: string;
+    jsonCC, situacao, idContaCliente, unidade: string;
 
 begin
 
@@ -468,7 +476,7 @@ begin
     begin
       if Timer.Enabled = False then
       begin
-        ShowMessage('Consumos importados com sucesso!');
+        ShowMessage('Não encontrado novos consumos para importação!');
       end;
       exit;
     end
@@ -567,12 +575,12 @@ begin
               end;
 
               // Monta o json para abertura do conta cliente
-              JsonAbrirCC := '{"idContaCliente": 0' + ',"cnpj": "9999999",' +
-                '"dtHrAbertura": "' + dataHoraAtual + '",' + '"situacao": "A",'
-                + '"vlTotal":' + vlrTotalConsumido + ',' + '"apelido": "' + name
-                + '","idCliente":' + idCliente + ',"dataHoraUltAlteracao": "' +
-                dataHoraAtual + '",' + '"cpf": "' + cpf + '", "rfid": "' +
-                rfid + '"}';
+              JsonAbrirCC := '{"idContaCliente": 0' + ',"cnpj": "' + cpf +
+                '","dtHrAbertura": "' + dataHoraAtual + '",' +
+                '"situacao": "A",' + '"vlTotal":' + vlrTotalConsumido + ',' +
+                '"apelido": "' + name + '","idCliente":' + idCliente +
+                ',"dataHoraUltAlteracao": "' + dataHoraAtual + '",' + '"cpf": "'
+                + cpf + '", "rfid": "' + rfid + '"}';
 
               // Abrir conta cliente para o cliente
               TRequest.New.BaseURL(urlBaseAlsti + ':' + portAlsti +
@@ -632,8 +640,8 @@ begin
               som := vlrTotalConsumido.ToDouble + vlTotalArmazenado.ToDouble;
 
               // Json put conta cliente
-              jsonCC := '{"idContaCliente":' + idCliente + ',"cnpj": "9999999",'
-                + '"dtHrAbertura": "' + dataHoraAtual + '",' +
+              jsonCC := '{"idContaCliente":' + idCliente + ',"cnpj": "' + cpf +
+                '","dtHrAbertura": "' + dataHoraAtual + '",' +
                 '"situacao": "A",' + '"vlTotal":' + StringReplace(som.ToString,
                 ',', '.', []) + ',' + '"apelido": "' + name + '","idCliente":' +
                 idCliente + ',"dataHoraUltAlteracao": "' +
@@ -699,6 +707,7 @@ begin
                   for LJSONValue in LJSONArray do
                   begin
                     idProduto := LJSONValue.GetValue<string>('codigo');
+                    unidade := LJSONValue.GetValue<string>('unidade');
                   end;
                 finally
                   LJSONArray.Free;
@@ -742,11 +751,11 @@ begin
                   jsonCervejas := '{"idContaCliente":' + idCliente + ',' +
                     '"idItem":' + nItem.ToString + ',"idProduto":' + idProduto +
                     ',' + '"descrProduto": "' + nameProduct + '","quantidade":'
-                    + ml + ',"vlUnitario":' + price +
-                    ',"vlDesconto": 0,"vlAcrescimo": 0' + ',"vlTotal":' + total
-                    + ',' + '"dataHoraUltAlteracao": "' + dataHoraAtual +
-                    '","idVenda":' + salesId + ',"barId":' + barId +
-                    ',"dataVenda": "' + saleDateFormated + '"}';
+                    + ml + ',"unidade": "' + unidade + '"' + ',"vlUnitario":' +
+                    price + ',"vlDesconto": 0,"vlAcrescimo": 0' + ',"vlTotal":'
+                    + total + ',"cancelado": "N"' + ',"dataHoraUltAlteracao": "'
+                    + dataHoraAtual + '","idVenda":' + salesId + ',"barId":' +
+                    barId + ',"dataVenda": "' + saleDateFormated + '"}';
 
                   // Gravar cervejas
                   LResponse := TRequest.New.BaseURL
@@ -820,6 +829,7 @@ begin
                   for LJSONValue in LJSONArray do
                   begin
                     idProduto := LJSONValue.GetValue<string>('codigo');
+                    unidade := LJSONValue.GetValue<string>('unidade');
                   end;
                 finally
                   LJSONArray.Free;
@@ -863,11 +873,12 @@ begin
                   jsonProdutos := '{"idContaCliente":' + idCliente + ',' +
                     '"idItem":' + nItem.ToString + ',"idProduto":' + idProduto +
                     ',' + '"descrProduto": "' + nameProduct + '","quantidade":'
-                    + quantity + ',"vlUnitario":' + price +
+                    + quantity + ',"unidade": "' + unidade + '"' +
+                    ',"vlUnitario":' + price +
                     ',"vlDesconto": 0,"vlAcrescimo": 0' + ',"vlTotal":' + total
-                    + ',' + '"dataHoraUltAlteracao": "' + dataHoraAtual +
-                    '","idVenda":' + salesId + ',"dataVenda": "' +
-                    saleDateFormated + '"}';
+                    + ',"cancelado": "N"' + ',"dataHoraUltAlteracao": "' +
+                    dataHoraAtual + '","idVenda":' + salesId + ',"dataVenda": "'
+                    + saleDateFormated + '"}';
 
                   // Gravar produtos
                   LResponse := TRequest.New.BaseURL

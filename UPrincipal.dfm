@@ -1,9 +1,10 @@
 object FrmPrincipal: TFrmPrincipal
   Left = 0
   Top = 0
+  BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'Integrador myTapp'
-  ClientHeight = 418
-  ClientWidth = 425
+  ClientHeight = 454
+  ClientWidth = 603
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,17 +19,16 @@ object FrmPrincipal: TFrmPrincipal
   object LeftBar: TPanel
     Left = 0
     Top = 41
-    Width = 425
-    Height = 345
+    Width = 603
+    Height = 381
     Align = alClient
     Caption = 'LeftBar'
     ShowCaption = False
     TabOrder = 0
-    ExplicitWidth = 528
     object SpeedButtonExpProdutos: TSpeedButton
       Left = 1
       Top = 51
-      Width = 423
+      Width = 601
       Height = 52
       Align = alTop
       Caption = 'Exportar Produtos'
@@ -80,7 +80,7 @@ object FrmPrincipal: TFrmPrincipal
     object SpeedButtonImpConsumos: TSpeedButton
       Left = 1
       Top = 103
-      Width = 423
+      Width = 601
       Height = 50
       Align = alTop
       Caption = 'Importar Consumos'
@@ -126,13 +126,13 @@ object FrmPrincipal: TFrmPrincipal
         0000000000000000000000000000000000000000000000000000}
       ParentFont = False
       OnClick = SpeedButtonImpConsumosClick
+      ExplicitLeft = 0
       ExplicitTop = 109
-      ExplicitWidth = 475
     end
     object SpeedButtonImpCli: TSpeedButton
       Left = 1
       Top = 1
-      Width = 423
+      Width = 601
       Height = 50
       Align = alTop
       Caption = 'Importar Clientes'
@@ -185,18 +185,16 @@ object FrmPrincipal: TFrmPrincipal
     object PanelCFG: TPanel
       AlignWithMargins = True
       Left = 4
-      Top = 266
-      Width = 417
+      Top = 302
+      Width = 595
       Height = 75
       Align = alBottom
       TabOrder = 0
       Visible = False
-      ExplicitTop = 358
-      ExplicitWidth = 803
       object Label2: TLabel
         Left = 1
         Top = 1
-        Width = 415
+        Width = 593
         Height = 16
         Align = alTop
         Alignment = taCenter
@@ -213,7 +211,7 @@ object FrmPrincipal: TFrmPrincipal
         AlignWithMargins = True
         Left = 1
         Top = 47
-        Width = 415
+        Width = 593
         Height = 26
         Margins.Left = 0
         Margins.Right = 0
@@ -232,25 +230,21 @@ object FrmPrincipal: TFrmPrincipal
         AlignWithMargins = True
         Left = 4
         Top = 20
-        Width = 409
+        Width = 587
         Height = 21
         Align = alTop
         TabOrder = 0
         Text = '0'
-        ExplicitTop = 18
-        ExplicitWidth = 795
       end
     end
   end
   object Footer: TPanel
     Left = 0
-    Top = 386
-    Width = 425
+    Top = 422
+    Width = 603
     Height = 32
     Align = alBottom
     TabOrder = 1
-    ExplicitTop = 478
-    ExplicitWidth = 811
     object SpeedButtonCFG: TSpeedButton
       Left = 113
       Top = 1
@@ -356,16 +350,15 @@ object FrmPrincipal: TFrmPrincipal
   object Header: TPanel
     Left = 0
     Top = 0
-    Width = 425
+    Width = 603
     Height = 41
     Align = alTop
     TabOrder = 2
-    ExplicitWidth = 811
     object Label1: TLabel
       AlignWithMargins = True
       Left = 4
       Top = 13
-      Width = 417
+      Width = 595
       Height = 24
       Margins.Top = 12
       Align = alClient
@@ -384,7 +377,7 @@ object FrmPrincipal: TFrmPrincipal
   object Timer: TTimer
     Interval = 0
     OnTimer = TimerTimer
-    Left = 344
-    Top = 241
+    Left = 280
+    Top = 249
   end
 end
