@@ -67,7 +67,7 @@ uses RESTRequest4D;
 
 function Tdm.Get(BaseUrl, PortaServico, Endpoint: string): TApiResultEnvioJson;
 begin
-  OAuth2Authenticator1.AccessToken := '23921923-fafa-4496-9961-e491631a7ea9';
+  OAuth2Authenticator1.AccessToken := '';
   OAuth2Authenticator1.AccessTokenParamName := 'token';
   RESTClient1.BaseUrl := BaseUrl + PortaServico;
   RESTRequest1.Params.Clear;
@@ -96,7 +96,7 @@ end;
 function Tdm.GetWithFilter(BaseUrl, PortaServico, Endpoint, Filtro: string)
   : TApiResultEnvioJson;
 begin
-  OAuth2Authenticator1.AccessToken := '23921923-fafa-4496-9961-e491631a7ea9';
+  OAuth2Authenticator1.AccessToken := '';
   OAuth2Authenticator1.AccessTokenParamName := 'token';
   RESTClient1.BaseUrl := BaseUrl + PortaServico + Filtro;
   RESTRequest1.Params.Clear;
@@ -125,7 +125,7 @@ end;
 function Tdm.Delete(BaseUrl, PortaServico, Endpoint: string)
   : TApiResultEnvioJson;
 begin
-  OAuth2Authenticator1.AccessToken := '23921923-fafa-4496-9961-e491631a7ea9';
+  OAuth2Authenticator1.AccessToken := '';
   OAuth2Authenticator1.AccessTokenParamName := 'token';
   RESTClient1.BaseUrl := BaseUrl + PortaServico;
   RESTRequest1.Params.Clear;
@@ -140,7 +140,7 @@ function Tdm.Post(BaseUrl, PortaServico, Endpoint, AJsonEnviar: String)
 var
   oRetorno: TJSONObject;
 begin
-  OAuth2Authenticator1.AccessToken := '23921923-fafa-4496-9961-e491631a7ea9';
+  OAuth2Authenticator1.AccessToken := '';
   OAuth2Authenticator1.AccessTokenParamName := 'token';
   RESTClient1.BaseUrl := BaseUrl + PortaServico;
   RESTRequest1.Params.Clear;
@@ -180,7 +180,7 @@ function Tdm.Put(BaseUrl, PortaServico, Endpoint, AJsonEnviar: String)
 var
   oRetorno: TJSONObject;
 begin
-  OAuth2Authenticator1.AccessToken := '23921923-fafa-4496-9961-e491631a7ea9';
+  OAuth2Authenticator1.AccessToken := '';
   OAuth2Authenticator1.AccessTokenParamName := 'token';
   RESTClient1.BaseUrl := BaseUrl + PortaServico;
   RESTRequest1.Params.Clear;
@@ -201,7 +201,7 @@ function Tdm.Patch(BaseUrl, PortaServico, Endpoint, AJsonEnviar: String)
 var
   oRetorno: TJSONObject;
 begin
-  OAuth2Authenticator1.AccessToken := '23921923-fafa-4496-9961-e491631a7ea9';
+  OAuth2Authenticator1.AccessToken := '';
   OAuth2Authenticator1.AccessTokenParamName := 'token';
   RESTClient1.BaseUrl := BaseUrl + PortaServico;
   RESTRequest1.Params.Clear;
